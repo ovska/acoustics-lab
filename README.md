@@ -9,6 +9,10 @@ legend interaction, pan, and zoom.
 Sliders snap over focused working ranges, while the numeric fields can hold
 values outside those slider ranges.
 
+The optimizer uses a logarithmic frequency slider with integer-Hz input, scans
+snapped slider-range values for the chosen parameter, and applies the best
+target-frequency result to every visible absorber in one undoable action.
+
 The calculator uses the Allard & Champoux (1992) empirical characteristic
 impedance and propagation constant form:
 

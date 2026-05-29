@@ -1,6 +1,11 @@
 const STORAGE_KEY = "porous-absorber-efficiency-v1";
 const HISTORY_LIMIT = 80;
 const THETA_LIMIT_RANDOM = (78 * Math.PI) / 180;
+const FREQUENCY_OPTIMIZER = {
+  min: 20,
+  max: 16000,
+  defaultValue: 1000,
+};
 
 const AIR = {
   density: 1.2041,
@@ -77,6 +82,9 @@ function cacheElements() {
   els.applyToVisibleButton = document.querySelector("#applyToVisibleButton");
   els.copyParameter = document.querySelector("#copyParameter");
   els.copySource = document.querySelector("#copySource");
+  els.optimizeFrequencyRange = document.querySelector("#optimizeFrequencyRange");
+  els.optimizeFrequencyInput = document.querySelector("#optimizeFrequencyInput");
+  els.optimizeButtons = document.querySelectorAll("[data-optimize-param]");
   els.absorberList = document.querySelector("#absorberList");
   els.absorberCount = document.querySelector("#absorberCount");
 }
@@ -136,6 +144,25 @@ function bindGlobalControls() {
       });
     });
   });
+
+  els.optimizeFrequencyRange.addEventListener("input", (event) => {
+    setOptimizeFrequency(frequencyFromSliderPosition(event.target.value));
+  });
+
+  els.optimizeFrequencyInput.addEventListener("input", (event) => {
+    if (event.target.value === "") return;
+    setOptimizeFrequencyIfValid(event.target.value);
+  });
+
+  els.optimizeFrequencyInput.addEventListener("change", (event) => {
+    setOptimizeFrequency(event.target.value);
+  });
+
+  els.optimizeButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+      optimizeVisibleAbsorbers(button.dataset.optimizeParam);
+    });
+  });
 }
 
 function populateParameterSelect() {
@@ -171,6 +198,7 @@ function createDefaultState() {
     randomIncidence: false,
     copyParameter: "thickness",
     copySourceId: null,
+    optimizeFrequency: FREQUENCY_OPTIMIZER.defaultValue,
     absorbers: [
       createAbsorber({
         name: "Absorber 1",
@@ -244,6 +272,7 @@ function normalizeState(candidate) {
     randomIncidence: Boolean(candidate?.randomIncidence),
     copyParameter: PARAMS[candidate?.copyParameter] ? candidate.copyParameter : "thickness",
     copySourceId: candidate?.copySourceId ?? absorbers[0]?.id ?? null,
+    optimizeFrequency: clampFrequency(candidate?.optimizeFrequency),
     absorbers,
   };
 
@@ -318,6 +347,8 @@ function syncStaticControls() {
   els.randomIncidence.checked = state.randomIncidence;
   els.undoButton.disabled = history.length === 0;
   els.copyParameter.value = state.copyParameter;
+  els.optimizeFrequencyRange.value = sliderPositionFromFrequency(state.optimizeFrequency);
+  els.optimizeFrequencyInput.value = Math.round(state.optimizeFrequency);
 }
 
 function renderCopySourceOptions() {
@@ -332,6 +363,52 @@ function renderCopySourceOptions() {
   els.copySource.disabled = state.absorbers.length === 0;
   els.copyParameter.disabled = state.absorbers.length === 0;
   els.applyToVisibleButton.disabled = !hasVisible || state.absorbers.length === 0;
+  els.optimizeButtons.forEach((button) => {
+    button.disabled = !hasVisible || state.absorbers.length === 0;
+  });
+}
+
+function setOptimizeFrequency(value) {
+  state.optimizeFrequency = clampFrequency(value);
+  saveState();
+  syncStaticControls();
+}
+
+function setOptimizeFrequencyIfValid(value) {
+  const number = Number(value);
+  if (
+    !Number.isFinite(number) ||
+    number < FREQUENCY_OPTIMIZER.min ||
+    number > FREQUENCY_OPTIMIZER.max
+  ) {
+    return;
+  }
+
+  state.optimizeFrequency = clampFrequency(number);
+  els.optimizeFrequencyInput.value = state.optimizeFrequency;
+  els.optimizeFrequencyRange.value = sliderPositionFromFrequency(state.optimizeFrequency);
+  saveState();
+}
+
+function optimizeVisibleAbsorbers(parameter) {
+  if (!PARAMS[parameter]) return;
+
+  const visibleAbsorbers = state.absorbers.filter((absorber) => absorber.visible);
+  if (!visibleAbsorbers.length) return;
+
+  commit(() => {
+    state.optimizeFrequency = clampFrequency(els.optimizeFrequencyInput.value);
+    state.absorbers.forEach((absorber) => {
+      if (absorber.visible) {
+        absorber[parameter] = bestSliderValueForAbsorber(
+          absorber,
+          parameter,
+          state.optimizeFrequency,
+          state.randomIncidence,
+        );
+      }
+    });
+  });
 }
 
 function renderAbsorberList() {
@@ -721,6 +798,61 @@ function sliderValueForParam(parameter, value) {
   const number = numberOrDefault(value, meta.defaultValue);
   const bounded = Math.min(meta.sliderMax, Math.max(meta.sliderMin, number));
   return roundToStep(bounded, meta.sliderStep);
+}
+
+function bestSliderValueForAbsorber(absorber, parameter, frequency, randomIncidence) {
+  const currentValue = absorber[parameter];
+  let bestValue = sliderValueForParam(parameter, currentValue);
+  let bestScore = -Infinity;
+
+  sliderValuesForParam(parameter).forEach((value) => {
+    const trial = { ...absorber, [parameter]: value };
+    const score = absorptionCoefficient(frequency, trial, randomIncidence);
+    const isBetter = score > bestScore + 1e-9;
+    const isTieCloser =
+      Math.abs(score - bestScore) <= 1e-9 &&
+      Math.abs(value - currentValue) < Math.abs(bestValue - currentValue);
+
+    if (isBetter || isTieCloser) {
+      bestScore = score;
+      bestValue = value;
+    }
+  });
+
+  return bestValue;
+}
+
+function sliderValuesForParam(parameter) {
+  const meta = PARAMS[parameter];
+  const values = [];
+  const steps = Math.round((meta.sliderMax - meta.sliderMin) / meta.sliderStep);
+
+  for (let index = 0; index <= steps; index += 1) {
+    values.push(roundToStep(meta.sliderMin + index * meta.sliderStep, meta.sliderStep));
+  }
+
+  return values;
+}
+
+function clampFrequency(value) {
+  const number = numberOrDefault(value, FREQUENCY_OPTIMIZER.defaultValue);
+  return Math.round(
+    Math.min(FREQUENCY_OPTIMIZER.max, Math.max(FREQUENCY_OPTIMIZER.min, number)),
+  );
+}
+
+function frequencyFromSliderPosition(value) {
+  const ratio = Math.min(1, Math.max(0, numberOrDefault(value, 0)));
+  const minLog = Math.log(FREQUENCY_OPTIMIZER.min);
+  const maxLog = Math.log(FREQUENCY_OPTIMIZER.max);
+  return clampFrequency(Math.exp(minLog + ratio * (maxLog - minLog)));
+}
+
+function sliderPositionFromFrequency(value) {
+  const frequency = clampFrequency(value);
+  const minLog = Math.log(FREQUENCY_OPTIMIZER.min);
+  const maxLog = Math.log(FREQUENCY_OPTIMIZER.max);
+  return (Math.log(frequency) - minLog) / (maxLog - minLog);
 }
 
 function roundToStep(value, step) {

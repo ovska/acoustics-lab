@@ -38,6 +38,36 @@
         <button id="applyToVisibleButton" class="secondary-button" type="button">Apply to visible</button>
       </section>
 
+      <section class="command-row optimize-row" aria-label="Optimize absorber parameter">
+        <input
+          id="optimizeFrequencyRange"
+          class="frequency-slider"
+          type="range"
+          min="0"
+          max="1"
+          step="any"
+          aria-label="Optimize frequency"
+        >
+        <input
+          id="optimizeFrequencyInput"
+          class="frequency-input"
+          type="number"
+          min="20"
+          max="16000"
+          step="1"
+          inputmode="numeric"
+          aria-label="Optimize frequency value"
+        >
+        <span class="command-label">Hz</span>
+        <span class="command-divider" aria-hidden="true"></span>
+        <span class="command-label">Optimize for:</span>
+        <div class="optimize-buttons" aria-label="Optimize parameter">
+          <button class="secondary-button" type="button" data-optimize-param="thickness">Thickness</button>
+          <button class="secondary-button" type="button" data-optimize-param="flowResistivity">Resistivity</button>
+          <button class="secondary-button" type="button" data-optimize-param="airGap">Gap</button>
+        </div>
+      </section>
+
       <section class="workspace">
         <section class="chart-panel" aria-label="Absorber chart">
           <div id="chart"></div>

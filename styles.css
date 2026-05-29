@@ -117,6 +117,37 @@ h1 {
   font-weight: 680;
 }
 
+.command-label {
+  color: var(--muted);
+  font-weight: 760;
+  white-space: nowrap;
+}
+
+.optimize-row {
+  align-items: center;
+}
+
+.command-divider {
+  width: 1px;
+  height: 32px;
+  background: var(--line);
+}
+
+.frequency-slider {
+  flex: 1 1 300px;
+  max-width: 560px;
+}
+
+.frequency-input {
+  width: 118px;
+}
+
+.optimize-buttons {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
 select,
 input[type="number"],
 input[type="text"] {
@@ -438,7 +469,12 @@ input[type="number"] {
 
   .top-actions > *,
   .command-row label,
-  .command-row button {
+  .command-row button,
+  .command-label,
+  .command-divider,
+  .frequency-slider,
+  .frequency-input,
+  .optimize-buttons {
     width: 100%;
   }
 
@@ -453,6 +489,15 @@ input[type="number"] {
 
   select {
     width: 100%;
+  }
+
+  .optimize-buttons {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .command-divider {
+    height: 1px;
   }
 
   .chart-panel {
