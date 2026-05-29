@@ -114,6 +114,7 @@ button:disabled {
 .brand-icon {
   width: 44px;
   height: 44px;
+  display: block;
   flex: 0 0 auto;
   border-radius: 10px;
   box-shadow: 0 5px 16px rgba(23, 33, 29, 0.14);
@@ -210,10 +211,6 @@ h1 {
   margin-left: auto;
   color: var(--muted);
   font-weight: 760;
-}
-
-.optimizer-visibility select {
-  min-width: 86px;
 }
 
 .room-modes-panel {
@@ -647,6 +644,11 @@ input[type="number"] {
     justify-content: flex-start;
   }
 
+  .command-row .switch-control {
+    align-items: center;
+    flex-direction: row;
+  }
+
   select {
     width: 100%;
   }
@@ -657,8 +659,6 @@ input[type="number"] {
   }
 
   .optimizer-visibility {
-    align-items: flex-start;
-    flex-direction: column;
     margin-left: 0;
   }
 

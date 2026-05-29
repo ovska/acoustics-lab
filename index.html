@@ -4,9 +4,8 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Porous Absorber Efficiency Lab</title>
-    <link rel="icon" href="/favicon.ico" sizes="any">
-    <link rel="icon" href="/site-icon.svg" type="image/svg+xml">
-    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <link rel="icon" href="favicon.ico" sizes="any">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
     <link rel="stylesheet" href="./styles.css">
     <script src="https://cdn.plot.ly/plotly-2.32.0.min.js" defer></script>
     <script src="./app.js" defer></script>
@@ -15,7 +14,44 @@
     <main class="app-shell">
       <header class="topbar">
         <div class="brand-lockup">
-          <img class="brand-icon" src="/site-icon.svg" alt="" width="44" height="44" aria-hidden="true">
+          <svg class="brand-icon" viewBox="0 0 1024 1024" width="44" height="44" aria-hidden="true" focusable="false">
+            <defs>
+              <linearGradient id="brandIconBg" x1="188" y1="102" x2="842" y2="940" gradientUnits="userSpaceOnUse">
+                <stop offset="0" stop-color="#176e69"/>
+                <stop offset="0.55" stop-color="#123f3b"/>
+                <stop offset="1" stop-color="#14251f"/>
+              </linearGradient>
+              <linearGradient id="brandIconSlab" x1="484" y1="206" x2="800" y2="822" gradientUnits="userSpaceOnUse">
+                <stop offset="0" stop-color="#fbfffc"/>
+                <stop offset="1" stop-color="#dfe9e4"/>
+              </linearGradient>
+            </defs>
+            <rect x="64" y="64" width="896" height="896" rx="184" fill="url(#brandIconBg)"/>
+            <path d="M184 326 C246 280 312 296 388 244" fill="none" stroke="#d8eeee" stroke-width="44" stroke-linecap="round"/>
+            <path d="M166 512 C238 462 318 534 402 470" fill="none" stroke="#efbd73" stroke-width="48" stroke-linecap="round"/>
+            <path d="M184 692 C262 738 326 690 400 752" fill="none" stroke="#8bd8d4" stroke-width="40" stroke-linecap="round"/>
+            <rect x="392" y="230" width="66" height="568" rx="33" fill="#b84d37"/>
+            <rect x="476" y="202" width="352" height="620" rx="82" fill="#000000" opacity="0.18" transform="translate(16 18)"/>
+            <rect x="476" y="202" width="352" height="620" rx="82" fill="url(#brandIconSlab)"/>
+            <rect x="524" y="258" width="70" height="508" rx="35" fill="#d8eeee" opacity="0.72"/>
+            <g fill="#116a68">
+              <circle cx="620" cy="322" r="28"/>
+              <circle cx="728" cy="322" r="24"/>
+              <circle cx="620" cy="432" r="22"/>
+              <circle cx="728" cy="432" r="29"/>
+              <circle cx="620" cy="542" r="30"/>
+              <circle cx="728" cy="542" r="22"/>
+              <circle cx="620" cy="652" r="23"/>
+              <circle cx="728" cy="652" r="28"/>
+            </g>
+            <g fill="#4b65a2" opacity="0.68">
+              <circle cx="674" cy="376" r="16"/>
+              <circle cx="674" cy="486" r="18"/>
+              <circle cx="674" cy="596" r="16"/>
+              <circle cx="674" cy="706" r="18"/>
+            </g>
+            <path d="M534 796 C604 842 740 844 808 782" fill="none" stroke="#b84d37" stroke-width="30" stroke-linecap="round"/>
+          </svg>
           <div class="brand-copy">
             <p class="eyebrow">Allard &amp; Champoux 1992</p>
             <h1>Porous Absorber Efficiency Lab</h1>
@@ -75,12 +111,10 @@
           <button class="secondary-button" type="button" data-optimize-param="flowResistivity">Resistivity</button>
           <button class="secondary-button" type="button" data-optimize-param="airGap">Gap</button>
         </div>
-        <label class="optimizer-visibility">
+        <label class="optimizer-visibility switch-control">
+          <input id="optimizerLineVisible" type="checkbox">
+          <span class="switch-track" aria-hidden="true"></span>
           <span>Show in graph</span>
-          <select id="optimizerLineVisible">
-            <option value="false">Off</option>
-            <option value="true">On</option>
-          </select>
         </label>
       </section>
 

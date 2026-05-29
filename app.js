@@ -198,7 +198,7 @@ function bindGlobalControls() {
   });
 
   els.optimizerLineVisible.addEventListener("change", (event) => {
-    state.showOptimizerLine = event.target.value === "true";
+    state.showOptimizerLine = event.target.checked;
     saveState();
     syncStaticControls();
     renderChart();
@@ -418,7 +418,7 @@ function syncStaticControls() {
   els.copyParameter.value = state.copyParameter;
   els.optimizeFrequencyRange.value = sliderPositionFromFrequency(state.optimizeFrequency);
   els.optimizeFrequencyInput.value = Math.round(state.optimizeFrequency);
-  els.optimizerLineVisible.value = String(state.showOptimizerLine);
+  els.optimizerLineVisible.checked = state.showOptimizerLine;
   els.roomModeOrder.value = String(state.roomModes.order);
 }
 
