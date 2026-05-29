@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-label="Porous absorber icon">
+  <defs>
+    <linearGradient id="bg" x1="188" y1="102" x2="842" y2="940" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#176e69"/>
+      <stop offset="0.55" stop-color="#123f3b"/>
+      <stop offset="1" stop-color="#14251f"/>
+    </linearGradient>
+    <linearGradient id="slab" x1="484" y1="206" x2="800" y2="822" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#fbfffc"/>
+      <stop offset="1" stop-color="#dfe9e4"/>
+    </linearGradient>
+  </defs>
+  <rect x="64" y="64" width="896" height="896" rx="184" fill="url(#bg)"/>
+  <path d="M184 326 C246 280 312 296 388 244" fill="none" stroke="#d8eeee" stroke-width="44" stroke-linecap="round"/>
+  <path d="M166 512 C238 462 318 534 402 470" fill="none" stroke="#efbd73" stroke-width="48" stroke-linecap="round"/>
+  <path d="M184 692 C262 738 326 690 400 752" fill="none" stroke="#8bd8d4" stroke-width="40" stroke-linecap="round"/>
+  <rect x="392" y="230" width="66" height="568" rx="33" fill="#b84d37"/>
+  <rect x="476" y="202" width="352" height="620" rx="82" fill="#000000" opacity="0.18" transform="translate(16 18)"/>
+  <rect x="476" y="202" width="352" height="620" rx="82" fill="url(#slab)"/>
+  <rect x="524" y="258" width="70" height="508" rx="35" fill="#d8eeee" opacity="0.72"/>
+  <g fill="#116a68">
+    <circle cx="620" cy="322" r="28"/>
+    <circle cx="728" cy="322" r="24"/>
+    <circle cx="620" cy="432" r="22"/>
+    <circle cx="728" cy="432" r="29"/>
+    <circle cx="620" cy="542" r="30"/>
+    <circle cx="728" cy="542" r="22"/>
+    <circle cx="620" cy="652" r="23"/>
+    <circle cx="728" cy="652" r="28"/>
+  </g>
+  <g fill="#4b65a2" opacity="0.68">
+    <circle cx="674" cy="376" r="16"/>
+    <circle cx="674" cy="486" r="18"/>
+    <circle cx="674" cy="596" r="16"/>
+    <circle cx="674" cy="706" r="18"/>
+  </g>
+  <path d="M534 796 C604 842 740 844 808 782" fill="none" stroke="#b84d37" stroke-width="30" stroke-linecap="round"/>
+</svg>
