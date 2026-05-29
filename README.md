@@ -15,6 +15,7 @@ target-frequency result to every visible absorber in one undoable action.
 The optimizer marker can be shown in the graph and turns on when the optimizer
 slider or buttons are used. The chart can also overlay axial room modes through
 3rd order from width, depth, and height dimensions entered in centimeters.
+The interface includes a persisted dark mode toggle.
 
 The calculator uses the Allard & Champoux (1992) empirical characteristic
 impedance and propagation constant form:

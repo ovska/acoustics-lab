@@ -87,6 +87,8 @@ let plotReady = false;
 
 const els = {};
 
+applyThemeAttribute();
+
 document.addEventListener("DOMContentLoaded", () => {
   cacheElements();
   bindGlobalControls();
@@ -99,6 +101,7 @@ function cacheElements() {
   els.chart = document.querySelector("#chart");
   els.chartStatus = document.querySelector("#chartStatus");
   els.randomIncidence = document.querySelector("#randomIncidence");
+  els.darkMode = document.querySelector("#darkMode");
   els.undoButton = document.querySelector("#undoButton");
   els.addAbsorberButton = document.querySelector("#addAbsorberButton");
   els.applyToVisibleButton = document.querySelector("#applyToVisibleButton");
@@ -119,6 +122,13 @@ function bindGlobalControls() {
     commit(() => {
       state.randomIncidence = els.randomIncidence.checked;
     });
+  });
+
+  els.darkMode.addEventListener("change", () => {
+    state.theme = els.darkMode.checked ? "dark" : "light";
+    saveState();
+    syncTheme();
+    renderChart();
   });
 
   els.undoButton.addEventListener("click", undo);
@@ -233,6 +243,7 @@ function waitForPlotly() {
 function createDefaultState() {
   return {
     randomIncidence: false,
+    theme: "light",
     copyParameter: "thickness",
     copySourceId: null,
     optimizeFrequency: FREQUENCY_OPTIMIZER.defaultValue,
@@ -321,6 +332,7 @@ function normalizeState(candidate) {
 
   const normalized = {
     randomIncidence: Boolean(candidate?.randomIncidence),
+    theme: candidate?.theme === "dark" ? "dark" : "light",
     copyParameter: PARAMS[candidate?.copyParameter] ? candidate.copyParameter : "thickness",
     copySourceId: candidate?.copySourceId ?? absorbers[0]?.id ?? null,
     optimizeFrequency: clampFrequency(candidate?.optimizeFrequency),
@@ -392,6 +404,7 @@ function undo() {
 }
 
 function render() {
+  syncTheme();
   syncStaticControls();
   renderCopySourceOptions();
   renderAbsorberList();
@@ -400,12 +413,23 @@ function render() {
 
 function syncStaticControls() {
   els.randomIncidence.checked = state.randomIncidence;
+  els.darkMode.checked = state.theme === "dark";
   els.undoButton.disabled = history.length === 0;
   els.copyParameter.value = state.copyParameter;
   els.optimizeFrequencyRange.value = sliderPositionFromFrequency(state.optimizeFrequency);
   els.optimizeFrequencyInput.value = Math.round(state.optimizeFrequency);
   els.optimizerLineVisible.value = String(state.showOptimizerLine);
   els.roomModeOrder.value = String(state.roomModes.order);
+}
+
+function syncTheme() {
+  applyThemeAttribute();
+}
+
+function applyThemeAttribute() {
+  if (document.documentElement) {
+    document.documentElement.dataset.theme = state.theme;
+  }
 }
 
 function renderCopySourceOptions() {
@@ -791,24 +815,26 @@ function renderChart() {
 }
 
 function chartLayout(emptyTitle = "") {
+  const theme = chartTheme();
   return {
     title: emptyTitle
-      ? { text: emptyTitle, x: 0.5, font: { size: 18, color: "#60706a" } }
+      ? { text: emptyTitle, x: 0.5, font: { size: 18, color: theme.muted } }
       : undefined,
     autosize: true,
     margin: { l: 62, r: 22, t: 22, b: 58 },
     paper_bgcolor: "rgba(255,255,255,0)",
-    plot_bgcolor: "#fbfcfb",
+    plot_bgcolor: theme.chartBg,
+    font: { color: theme.ink },
     hovermode: "x unified",
     showlegend: true,
     legend: {
       orientation: "h",
       x: 0,
       y: 1.09,
-      bgcolor: "rgba(255,255,255,0.78)",
-      bordercolor: "#d8ded7",
+      bgcolor: theme.legendBg,
+      bordercolor: theme.line,
       borderwidth: 1,
-      font: { size: 12 },
+      font: { size: 12, color: theme.ink },
     },
     xaxis: {
       title: "Frequency (Hz)",
@@ -816,18 +842,41 @@ function chartLayout(emptyTitle = "") {
       range: [Math.log10(20), Math.log10(20000)],
       tickvals: [20, 31.5, 63, 125, 250, 500, 1000, 2000, 4000, 8000, 16000],
       ticktext: ["20", "31.5", "63", "125", "250", "500", "1k", "2k", "4k", "8k", "16k"],
-      gridcolor: "#e5eae4",
+      gridcolor: theme.grid,
       zeroline: false,
     },
     yaxis: {
       title: "Efficiency / absorption coefficient",
       range: [0, 1.05],
       fixedrange: false,
-      gridcolor: "#e5eae4",
+      gridcolor: theme.grid,
       zeroline: false,
     },
     shapes: chartOverlayShapes(),
     uirevision: "absorber-efficiency-lab",
+  };
+}
+
+function chartTheme() {
+  if (typeof getComputedStyle !== "function") {
+    return {
+      ink: "#17211d",
+      muted: "#60706a",
+      line: "#d8ded7",
+      grid: "#e5eae4",
+      chartBg: "#fbfcfb",
+      legendBg: "rgba(255,255,255,0.78)",
+    };
+  }
+
+  const styles = getComputedStyle(document.documentElement);
+  return {
+    ink: styles.getPropertyValue("--ink").trim(),
+    muted: styles.getPropertyValue("--muted").trim(),
+    line: styles.getPropertyValue("--line").trim(),
+    grid: styles.getPropertyValue("--grid").trim(),
+    chartBg: styles.getPropertyValue("--chart-bg").trim(),
+    legendBg: styles.getPropertyValue("--legend-bg").trim(),
   };
 }
 
@@ -1113,7 +1162,7 @@ function optimizerLineShape() {
     y0: 0,
     y1: 1,
     line: {
-      color: "#17211d",
+      color: chartTheme().ink,
       width: 1.5,
       dash: "dash",
     },
