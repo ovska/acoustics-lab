@@ -148,6 +148,64 @@ h1 {
   flex-wrap: wrap;
 }
 
+.room-modes-panel {
+  display: grid;
+  grid-template-columns: 230px minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
+  margin-bottom: 16px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.72);
+  box-shadow: 0 8px 24px rgba(23, 33, 29, 0.06);
+}
+
+.room-mode-select label {
+  display: grid;
+  gap: 8px;
+  color: var(--muted);
+  font-weight: 760;
+}
+
+.room-mode-select select {
+  width: 100%;
+}
+
+.room-dimension-list {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.room-dimension-field {
+  display: grid;
+  gap: 8px;
+}
+
+.room-dimension-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 0.88rem;
+  font-weight: 780;
+}
+
+.room-swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  box-shadow: 0 0 0 3px rgba(23, 33, 29, 0.08);
+}
+
+.room-dimension-controls {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 112px;
+  gap: 10px;
+  align-items: center;
+}
+
 select,
 input[type="number"],
 input[type="text"] {
@@ -446,6 +504,10 @@ input[type="number"] {
     grid-template-columns: 1fr;
   }
 
+  .room-modes-panel {
+    grid-template-columns: 1fr;
+  }
+
   .chart-panel {
     position: static;
   }
@@ -498,6 +560,14 @@ input[type="number"] {
 
   .command-divider {
     height: 1px;
+  }
+
+  .room-dimension-list {
+    grid-template-columns: 1fr;
+  }
+
+  .room-dimension-controls {
+    grid-template-columns: 1fr;
   }
 
   .chart-panel {

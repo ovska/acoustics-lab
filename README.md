@@ -12,6 +12,8 @@ values outside those slider ranges.
 The optimizer uses a logarithmic frequency slider with integer-Hz input, scans
 snapped slider-range values for the chosen parameter, and applies the best
 target-frequency result to every visible absorber in one undoable action.
+The chart also marks the optimizer frequency and can optionally overlay axial
+room modes through 3rd order from width, depth, and height dimensions.
 
 The calculator uses the Allard & Champoux (1992) empirical characteristic
 impedance and propagation constant form:
