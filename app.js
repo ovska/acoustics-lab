@@ -179,14 +179,7 @@ function bindGlobalControls() {
     setOptimizeFrequency(frequencyFromSliderPosition(event.target.value));
   });
 
-  els.optimizeFrequencyInput.addEventListener("input", (event) => {
-    if (event.target.value === "") return;
-    setOptimizeFrequencyIfValid(event.target.value);
-  });
-
-  els.optimizeFrequencyInput.addEventListener("change", (event) => {
-    setOptimizeFrequency(event.target.value);
-  });
+  bindDeferredFieldCommit(els.optimizeFrequencyInput, commitOptimizeFrequencyInput);
 
   els.optimizeButtons.forEach((button) => {
     button.addEventListener("click", () => {
@@ -432,27 +425,21 @@ function renderCopySourceOptions() {
   });
 }
 
+function bindDeferredFieldCommit(input, callback) {
+  input.addEventListener("keydown", (event) => {
+    if (event.key !== "Enter") return;
+    event.preventDefault();
+    callback(event);
+    event.currentTarget.blur();
+  });
+  input.addEventListener("change", callback);
+  input.addEventListener("blur", callback);
+}
+
 function setOptimizeFrequency(value) {
   state.optimizeFrequency = clampFrequency(value);
   saveState();
   syncStaticControls();
-  renderChart();
-}
-
-function setOptimizeFrequencyIfValid(value) {
-  const number = Number(value);
-  if (
-    !Number.isFinite(number) ||
-    number < FREQUENCY_OPTIMIZER.min ||
-    number > FREQUENCY_OPTIMIZER.max
-  ) {
-    return;
-  }
-
-  state.optimizeFrequency = clampFrequency(number);
-  els.optimizeFrequencyInput.value = state.optimizeFrequency;
-  els.optimizeFrequencyRange.value = sliderPositionFromFrequency(state.optimizeFrequency);
-  saveState();
   renderChart();
 }
 
@@ -462,6 +449,15 @@ function enableOptimizerLine() {
   saveState();
   syncStaticControls();
   renderChart();
+}
+
+function commitOptimizeFrequencyInput() {
+  if (els.optimizeFrequencyInput.value === "") {
+    syncStaticControls();
+    return;
+  }
+
+  setOptimizeFrequency(els.optimizeFrequencyInput.value);
 }
 
 function optimizeVisibleAbsorbers(parameter) {
@@ -537,9 +533,7 @@ function renderRoomDimensionList() {
             >
             <input
               type="number"
-              min="${ROOM_DIMENSION_RANGE.min}"
-              max="${ROOM_DIMENSION_RANGE.max}"
-              step="${ROOM_DIMENSION_RANGE.step}"
+              step="any"
               value="${value ?? ""}"
               data-room-action="number"
               data-room-dimension="${key}"
@@ -572,16 +566,19 @@ function bindRoomDimensionToggle(button) {
 }
 
 function bindRoomDimensionControl(input) {
-  input.addEventListener("input", (event) => {
-    const dimension = event.target.dataset.roomDimension;
-    const value = roomValueFromControl(event.target);
-    state.roomModes.dimensions[dimension] = value;
-    saveState();
-    syncRoomDimensionControl(dimension, value);
-    renderChart();
-  });
+  if (input.dataset.roomAction === "range") {
+    input.addEventListener("input", (event) => {
+      const dimension = event.target.dataset.roomDimension;
+      const value = roomValueFromControl(event.target);
+      state.roomModes.dimensions[dimension] = value;
+      saveState();
+      syncRoomDimensionControl(dimension, value);
+      renderChart();
+    });
+    return;
+  }
 
-  input.addEventListener("change", (event) => {
+  bindDeferredFieldCommit(input, (event) => {
     const dimension = event.target.dataset.roomDimension;
     const value = roomValueFromControl(event.target);
     state.roomModes.dimensions[dimension] = value;
@@ -638,7 +635,6 @@ function renderAbsorberCard(absorber, index) {
             >
             <input
               type="number"
-              min="${meta.fieldMin}"
               step="any"
               value="${value}"
               data-action="number"
@@ -675,14 +671,12 @@ function renderAbsorberCard(absorber, index) {
 }
 
 function bindAbsorberCard(card, absorberId) {
-  card.querySelector('[data-action="name"]').addEventListener("input", (event) => {
-    mutateLive(() => {
+  const nameInput = card.querySelector('[data-action="name"]');
+  bindDeferredFieldCommit(nameInput, (event) => {
+    commit(() => {
       findAbsorber(absorberId).name = event.target.value;
     });
-    renderCopySourceOptions();
   });
-  card.querySelector('[data-action="name"]').addEventListener("change", endPendingChange);
-  card.querySelector('[data-action="name"]').addEventListener("blur", endPendingChange);
 
   card.querySelector('[data-action="visible"]').addEventListener("change", (event) => {
     commit(() => {
@@ -712,7 +706,7 @@ function bindAbsorberCard(card, absorberId) {
     });
   });
 
-  card.querySelectorAll('[data-action="range"], [data-action="number"]').forEach((input) => {
+  card.querySelectorAll('[data-action="range"]').forEach((input) => {
     input.addEventListener("pointerdown", startPendingChange);
     input.addEventListener("focus", startPendingChange);
     input.addEventListener("input", (event) => {
@@ -727,6 +721,21 @@ function bindAbsorberCard(card, absorberId) {
     input.addEventListener("change", endPendingChange);
     input.addEventListener("pointerup", endPendingChange);
     input.addEventListener("blur", endPendingChange);
+  });
+
+  card.querySelectorAll('[data-action="number"]').forEach((input) => {
+    bindDeferredFieldCommit(input, (event) => {
+      const parameter = event.target.dataset.param;
+      const value = valueFromControl(parameter, event.target);
+      if (value === null) {
+        syncCardParameter(card, parameter, findAbsorber(absorberId)[parameter]);
+        return;
+      }
+
+      commit(() => {
+        findAbsorber(absorberId)[parameter] = value;
+      });
+    });
   });
 }
 
@@ -1068,8 +1077,7 @@ function normalizeRoomDimension(value, migrateMillimeters = false) {
   const number = Number(value);
   if (!Number.isFinite(number) || number <= 0) return null;
   const centimeters = migrateMillimeters && number > 1000 ? number / 10 : number;
-  const stepped = roundToStep(centimeters, ROOM_DIMENSION_RANGE.step);
-  return Math.min(ROOM_DIMENSION_RANGE.max, Math.max(ROOM_DIMENSION_RANGE.min, stepped));
+  return centimeters;
 }
 
 function roomValueFromControl(input) {
