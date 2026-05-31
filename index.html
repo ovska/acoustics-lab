@@ -55,23 +55,16 @@
             <path d="M534 796 C604 842 740 844 808 782" fill="none" stroke="#b84d37" stroke-width="30" stroke-linecap="round"/>
           </svg>
           <div class="brand-copy">
-            <p class="eyebrow">Allard &amp; Champoux 1992</p>
+            <p class="eyebrow">Based on Allard &amp; Champoux (1992) models</p>
             <h1>Porous Absorber Efficiency Lab</h1>
           </div>
         </div>
         <div class="top-actions" aria-label="Global controls">
           <label class="switch-control">
-            <input id="randomIncidence" type="checkbox">
-            <span class="switch-track" aria-hidden="true"></span>
-            <span>Random incidence</span>
-          </label>
-          <label class="switch-control">
             <input id="darkMode" type="checkbox">
             <span class="switch-track" aria-hidden="true"></span>
             <span>Dark mode</span>
           </label>
-          <button id="undoButton" class="icon-button" type="button" title="Undo">Undo</button>
-          <button id="addAbsorberButton" class="primary-button" type="button">Add absorber</button>
         </div>
       </header>
 
@@ -120,7 +113,7 @@
         </label>
       </section>
 
-      <section class="room-modes-panel" aria-label="Room mode controls">
+      <section id="roomModesPanel" class="room-modes-panel" aria-label="Room mode controls">
         <div class="room-mode-select">
           <label>
             <span>Show room modes:</span>
@@ -138,13 +131,26 @@
       <section class="workspace">
         <section class="chart-panel" aria-label="Absorber chart">
           <div id="chart"></div>
-          <div id="chartStatus" class="chart-status" role="status"></div>
+          <div class="chart-footer">
+            <label class="switch-control graph-incidence-control">
+              <input id="randomIncidence" type="checkbox">
+              <span class="switch-track" aria-hidden="true"></span>
+              <span>Random incidence</span>
+            </label>
+            <div id="chartStatus" class="chart-status" role="status"></div>
+          </div>
         </section>
 
         <aside class="control-panel" aria-label="Absorber controls">
           <div class="panel-heading">
-            <h2>Absorbers</h2>
-            <span id="absorberCount"></span>
+            <div class="panel-title">
+              <h2>Absorbers</h2>
+              <span id="absorberCount"></span>
+            </div>
+            <div class="panel-actions">
+              <button id="undoButton" class="icon-button" type="button" title="Undo">Undo</button>
+              <button id="addAbsorberButton" class="primary-button" type="button">Add absorber</button>
+            </div>
           </div>
           <div id="absorberList" class="absorber-list"></div>
         </aside>

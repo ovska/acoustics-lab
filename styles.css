@@ -130,7 +130,7 @@ button:disabled {
   font-size: 0.75rem;
   font-weight: 760;
   letter-spacing: 0;
-  text-transform: uppercase;
+  text-transform: none;
 }
 
 h1,
@@ -226,6 +226,10 @@ h1 {
   box-shadow: var(--soft-shadow);
 }
 
+.room-modes-panel[data-room-modes-enabled="false"] {
+  grid-template-columns: 230px;
+}
+
 .room-mode-select label {
   display: grid;
   gap: 8px;
@@ -241,6 +245,10 @@ h1 {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
+}
+
+.room-dimension-list[hidden] {
+  display: none;
 }
 
 .room-dimension-field {
@@ -431,11 +439,23 @@ button:not(:disabled):active {
   height: 640px;
 }
 
-.chart-status {
-  min-height: 22px;
+.chart-footer {
+  min-height: 46px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
   padding: 0 6px 8px;
+}
+
+.graph-incidence-control {
+  flex: 0 0 auto;
+}
+
+.chart-status {
+  min-width: 0;
   color: var(--muted);
   font-size: 0.88rem;
+  font-weight: 680;
 }
 
 .control-panel {
@@ -444,10 +464,23 @@ button:not(:disabled):active {
 
 .panel-heading {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
   gap: 10px;
   margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.panel-title {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.panel-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 .panel-heading h2 {
@@ -591,6 +624,10 @@ input[type="number"] {
     grid-template-columns: 1fr;
   }
 
+  .room-modes-panel[data-room-modes-enabled="false"] {
+    grid-template-columns: 1fr;
+  }
+
   .chart-panel {
     position: static;
   }
@@ -681,6 +718,26 @@ input[type="number"] {
 
   #chart {
     height: 440px;
+  }
+
+  .chart-footer {
+    align-items: stretch;
+    flex-direction: column;
+    padding: 0 2px 6px;
+  }
+
+  .graph-incidence-control {
+    width: 100%;
+  }
+
+  .panel-heading {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .panel-actions {
+    display: grid;
+    grid-template-columns: 1fr;
   }
 
   .absorber-title-row {

@@ -111,6 +111,7 @@ function cacheElements() {
   els.optimizeFrequencyInput = document.querySelector("#optimizeFrequencyInput");
   els.optimizerLineVisible = document.querySelector("#optimizerLineVisible");
   els.optimizeButtons = document.querySelectorAll("[data-optimize-param]");
+  els.roomModesPanel = document.querySelector("#roomModesPanel");
   els.roomModeOrder = document.querySelector("#roomModeOrder");
   els.roomDimensionList = document.querySelector("#roomDimensionList");
   els.absorberList = document.querySelector("#absorberList");
@@ -420,6 +421,10 @@ function syncStaticControls() {
   els.optimizeFrequencyInput.value = Math.round(state.optimizeFrequency);
   els.optimizerLineVisible.checked = state.showOptimizerLine;
   els.roomModeOrder.value = String(state.roomModes.order);
+  const roomModesEnabled = state.roomModes.order > 0;
+  els.roomModesPanel.dataset.roomModesEnabled = String(roomModesEnabled);
+  els.roomDimensionList.hidden = !roomModesEnabled;
+  els.roomDimensionList.setAttribute("aria-hidden", String(!roomModesEnabled));
 }
 
 function syncTheme() {
