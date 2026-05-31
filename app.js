@@ -48,7 +48,7 @@ const PARAMS = {
   flowResistivity: {
     label: "Flow resistivity",
     shortLabel: "Flow resistivity",
-    unit: "Pa.s/m^2",
+    unit: "Pa.s/m²",
     sliderMin: 5000,
     sliderMax: 25000,
     sliderStep: 1000,
@@ -75,7 +75,7 @@ const COLORS = [
   "#517a32",
   "#8a3d6e",
   "#2d7d9a",
-  "#aa6c2d",
+  "#33312f",
   "#3f6f55",
   "#7f4fb0",
 ];

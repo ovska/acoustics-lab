@@ -27,3 +27,7 @@ impedance and propagation constant form:
 The porous layer and optional air gap are evaluated with transfer matrices
 against a rigid backing. Random incidence is estimated by diffuse-field angular
 integration up to 78 deg.
+
+## Disclaimer
+
+Made with Codex. Neither GPT 5.5 nor me are professional acousticians!
