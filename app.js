@@ -1001,6 +1001,7 @@ function renderChart() {
     CHART_FREQUENCY.dataMax,
     CHART_FREQUENCY.samples,
   );
+  const wavelengths = frequencies.map((frequency) => air.speed / frequency);
   const traces = state.absorbers.map((absorber) => {
     const absorption = frequencies.map((frequency) =>
       absorptionCoefficient(frequency, absorber, state.randomIncidence, air),
@@ -1015,9 +1016,13 @@ function renderChart() {
         color: COLORS[state.absorbers.indexOf(absorber) % COLORS.length],
         width: 3,
       },
+      customdata: wavelengths.map((wavelength) => [
+        formatLength(wavelength),
+        formatLength(wavelength / 4),
+      ]),
       hovertemplate:
-        "<b>%{fullData.name}</b><br>%{x:.0f} Hz<br>efficiency %{y:.3f}<extra></extra>",
-    };
+        "<b>%{fullData.name}</b><br>%{x:.0f} Hz<br>wavelength %{customdata[0]}<br>quarter wavelength %{customdata[1]}<br>efficiency %{y:.3f}<extra></extra>",
+     };
   });
 
   els.chartStatus.textContent = state.randomIncidence
@@ -1461,6 +1466,23 @@ function formatNumber(value) {
   return new Intl.NumberFormat("en-US", {
     maximumFractionDigits: 1,
   }).format(value);
+}
+
+function formatLength(meters) {
+  let value = meters;
+  let unit = "m";
+
+  if (meters < 0.1) {
+    value = meters * 1000;
+    unit = "mm";
+  } else if (meters < 1) {
+    value = meters * 100;
+    unit = "cm";
+  }
+
+  return `${new Intl.NumberFormat("en-US", {
+    maximumFractionDigits: value < 10 ? 1 : 0,
+  }).format(value)}${unit}`;
 }
 
 function clamp01(value) {
