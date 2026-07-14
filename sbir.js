@@ -17,11 +17,11 @@ const CHART = {
 
 const PARAMS = {
   cabinetDepth: {
-    defaultValue: 350,
+    defaultValue: 200,
     unit: "mm",
   },
   rearDistance: {
-    defaultValue: 300,
+    defaultValue: 0,
     unit: "mm",
   },
   highPassFrequency: {
