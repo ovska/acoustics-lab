@@ -124,6 +124,107 @@ button:disabled {
   min-width: 0;
 }
 
+.tool-tabs {
+  width: fit-content;
+  min-height: 30px;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin: 0 0 6px;
+  padding: 3px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: var(--surface);
+}
+
+.tool-tab {
+  min-height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 9px;
+  border-radius: 5px;
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 780;
+  line-height: 1;
+  text-decoration: none;
+  transition:
+    background 140ms ease,
+    color 140ms ease;
+}
+
+.tool-tab:hover {
+  background: var(--accent-soft);
+  color: var(--ink);
+}
+
+.tool-tab[aria-current="page"] {
+  background: var(--accent);
+  color: var(--bg);
+}
+
+.title-with-info {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.model-info {
+  width: 24px;
+  height: 24px;
+  min-height: 24px;
+  position: relative;
+  flex: 0 0 auto;
+  display: inline-grid;
+  place-items: center;
+  padding: 0;
+  border-color: var(--line-strong);
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--accent);
+  font-size: 0.78rem;
+  font-weight: 840;
+}
+
+.model-info::after {
+  content: attr(data-tooltip);
+  width: max-content;
+  max-width: min(340px, calc(100vw - 32px));
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 8px);
+  right: 0;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: var(--surface);
+  box-shadow: var(--soft-shadow);
+  color: var(--ink);
+  font-size: 0.78rem;
+  font-weight: 680;
+  line-height: 1.35;
+  text-align: left;
+  white-space: normal;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translateY(-3px);
+  transition:
+    opacity 120ms ease,
+    transform 120ms ease,
+    visibility 120ms ease;
+}
+
+.model-info:hover::after,
+.model-info:focus-visible::after,
+.model-info[aria-expanded="true"]::after {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
 .eyebrow {
   margin: 0 0 5px;
   color: var(--accent);

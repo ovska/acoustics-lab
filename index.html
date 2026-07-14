@@ -8,9 +8,9 @@
     <link rel="icon" href="./site-icon.svg" type="image/svg+xml">
     <link rel="icon" href="./site-icon.png" type="image/png" sizes="512x512">
     <link rel="apple-touch-icon" href="./apple-touch-icon.png" sizes="180x180">
-    <link rel="stylesheet" href="./styles.css">
+    <link rel="stylesheet" href="./styles.css?v=2">
     <script src="https://cdn.plot.ly/plotly-2.32.0.min.js" defer></script>
-    <script src="./app.js" defer></script>
+    <script src="./app.js?v=2" defer></script>
   </head>
   <body>
     <main class="app-shell">
@@ -55,8 +55,20 @@
             <path d="M534 796 C604 842 740 844 808 782" fill="none" stroke="#b84d37" stroke-width="30" stroke-linecap="round"/>
           </svg>
           <div class="brand-copy">
-            <p class="eyebrow">Based on Allard &amp; Champoux (1992) models</p>
-            <h1>Porous Absorber Efficiency Lab</h1>
+            <nav class="tool-tabs" aria-label="Acoustics tools">
+              <a class="tool-tab" href="./index.html" aria-current="page">Absorbers</a>
+              <a class="tool-tab" href="./sbir.html">SBIR</a>
+            </nav>
+            <div class="title-with-info">
+              <h1>Porous Absorber Efficiency Lab</h1>
+              <button
+                class="model-info"
+                type="button"
+                aria-label="Based on Allard and Champoux 1992 models"
+                aria-expanded="false"
+                data-tooltip="Based on Allard &amp; Champoux (1992) models."
+              >i</button>
+            </div>
           </div>
         </div>
         <div class="top-actions" aria-label="Global controls">

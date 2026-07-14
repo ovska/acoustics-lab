@@ -176,12 +176,33 @@ applyThemeAttribute();
 
 document.addEventListener("DOMContentLoaded", () => {
   cacheElements();
+  bindModelInfoTooltip();
   bindGlobalControls();
   populateParameterSelect();
   populateAbsorberPresetSelect();
   waitForPlotly();
   render();
 });
+
+function bindModelInfoTooltip() {
+  const button = document.querySelector(".model-info");
+  if (!button) return;
+
+  button.addEventListener("click", () => {
+    const isExpanded = button.getAttribute("aria-expanded") === "true";
+    button.setAttribute("aria-expanded", String(!isExpanded));
+  });
+
+  button.addEventListener("blur", () => {
+    button.setAttribute("aria-expanded", "false");
+  });
+
+  button.addEventListener("keydown", (event) => {
+    if (event.key !== "Escape") return;
+    button.setAttribute("aria-expanded", "false");
+    button.blur();
+  });
+}
 
 function cacheElements() {
   els.chart = document.querySelector("#chart");

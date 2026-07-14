@@ -60,10 +60,31 @@ applyThemeAttribute();
 
 document.addEventListener("DOMContentLoaded", () => {
   cacheElements();
+  bindModelInfoTooltip();
   bindControls();
   syncControls();
   waitForPlotly();
 });
+
+function bindModelInfoTooltip() {
+  const button = document.querySelector(".model-info");
+  if (!button) return;
+
+  button.addEventListener("click", () => {
+    const isExpanded = button.getAttribute("aria-expanded") === "true";
+    button.setAttribute("aria-expanded", String(!isExpanded));
+  });
+
+  button.addEventListener("blur", () => {
+    button.setAttribute("aria-expanded", "false");
+  });
+
+  button.addEventListener("keydown", (event) => {
+    if (event.key !== "Escape") return;
+    button.setAttribute("aria-expanded", "false");
+    button.blur();
+  });
+}
 
 function cacheElements() {
   els.chart = document.querySelector("#chart");
@@ -71,7 +92,6 @@ function cacheElements() {
   els.effectiveDistance = document.querySelector("#effectiveDistance");
   els.darkMode = document.querySelector("#darkMode");
   els.resetAllButton = document.querySelector("#resetAllButton");
-  els.absorberLabButton = document.querySelector("#absorberLabButton");
   els.highPassCard = document.querySelector("#highPassCard");
   els.highPassEnabled = document.querySelector("#highPassEnabled");
   els.highPassEnabledLabel = document.querySelector("#highPassEnabledLabel");
@@ -136,9 +156,6 @@ function bindControls() {
     renderChart();
   });
 
-  els.absorberLabButton.addEventListener("click", () => {
-    window.location.href = "./index.html";
-  });
 }
 
 function createDefaultState() {
