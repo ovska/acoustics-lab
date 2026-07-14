@@ -1021,7 +1021,7 @@ function renderChart() {
         formatLength(wavelength / 4),
       ]),
       hovertemplate:
-        "<b>%{fullData.name}</b><br>%{x:.0f} Hz<br>wavelength %{customdata[0]}<br>quarter wavelength %{customdata[1]}<br>efficiency %{y:.3f}<extra></extra>",
+        "<b>%{fullData.name}</b><br>%{x:.0f} Hz<br>%{customdata[1]} λ/4 (%{customdata[0]} λ)<br>efficiency %{y:.3f}<extra></extra>",
      };
   });
 
