@@ -577,6 +577,15 @@ button:not(:disabled):active {
   gap: 8px;
 }
 
+.sbir-card-title-row {
+  justify-content: space-between;
+  min-width: 0;
+}
+
+.absorber-card[data-enabled="false"] .absorber-body {
+  opacity: 0.55;
+}
+
 .absorber-title-row input[type="text"] {
   width: 100%;
   min-width: 0;

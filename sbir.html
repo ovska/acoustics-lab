@@ -116,10 +116,49 @@
               </div>
             </section>
 
-            <section class="absorber-card" aria-labelledby="absorptionHeading">
+            <section id="highPassCard" class="absorber-card" aria-labelledby="highPassHeading">
+              <div class="absorber-header">
+                <span class="trace-swatch" style="background: #4b65a2" aria-hidden="true"></span>
+                <div class="absorber-title-row sbir-card-title-row">
+                  <strong id="highPassHeading">Speaker high pass</strong>
+                  <label class="switch-control">
+                    <input id="highPassEnabled" type="checkbox" aria-label="Enable speaker high pass">
+                    <span class="switch-track" aria-hidden="true"></span>
+                    <span id="highPassEnabledLabel">On</span>
+                  </label>
+                </div>
+              </div>
+              <div class="absorber-body">
+                <label class="slider-field" for="highPassFrequency">
+                  <span class="slider-label">
+                    <span>High-pass frequency</span>
+                    <strong id="highPassFrequencyValue"></strong>
+                  </span>
+                  <input id="highPassFrequency" type="range" min="10" max="100" step="5">
+                </label>
+
+                <div class="chart-summary-row">
+                  <label class="switch-control">
+                    <input id="sealedSpeaker" type="checkbox" aria-label="Sealed speaker roll-off">
+                    <span class="switch-track" aria-hidden="true"></span>
+                    <span>Sealed speaker</span>
+                  </label>
+                  <span id="highPassSlope" class="chart-status"></span>
+                </div>
+              </div>
+            </section>
+
+            <section id="absorptionCard" class="absorber-card" aria-labelledby="absorptionHeading">
               <div class="absorber-header">
                 <span class="trace-swatch" style="background: #b84d37" aria-hidden="true"></span>
-                <strong id="absorptionHeading">Absorption behind speaker</strong>
+                <div class="absorber-title-row sbir-card-title-row">
+                  <strong id="absorptionHeading">Absorption behind speaker</strong>
+                  <label class="switch-control">
+                    <input id="absorptionEnabled" type="checkbox" aria-label="Enable absorption behind speaker">
+                    <span class="switch-track" aria-hidden="true"></span>
+                    <span id="absorptionEnabledLabel">On</span>
+                  </label>
+                </div>
               </div>
               <div class="absorber-body">
                 <label class="slider-field" for="flowResistivity">

@@ -24,6 +24,10 @@ const PARAMS = {
     defaultValue: 300,
     unit: "mm",
   },
+  highPassFrequency: {
+    defaultValue: 50,
+    unit: "Hz",
+  },
   flowResistivity: {
     defaultValue: 10000,
     unit: "Pa·s/m²",
@@ -64,6 +68,14 @@ function cacheElements() {
   els.darkMode = document.querySelector("#darkMode");
   els.resetAllButton = document.querySelector("#resetAllButton");
   els.absorberLabButton = document.querySelector("#absorberLabButton");
+  els.highPassCard = document.querySelector("#highPassCard");
+  els.highPassEnabled = document.querySelector("#highPassEnabled");
+  els.highPassEnabledLabel = document.querySelector("#highPassEnabledLabel");
+  els.sealedSpeaker = document.querySelector("#sealedSpeaker");
+  els.highPassSlope = document.querySelector("#highPassSlope");
+  els.absorptionCard = document.querySelector("#absorptionCard");
+  els.absorptionEnabled = document.querySelector("#absorptionEnabled");
+  els.absorptionEnabledLabel = document.querySelector("#absorptionEnabledLabel");
 
   Object.keys(PARAMS).forEach((parameter) => {
     els[parameter] = document.querySelector(`#${parameter}`);
@@ -79,6 +91,27 @@ function bindControls() {
       syncControls();
       scheduleChartRender();
     });
+  });
+
+  els.highPassEnabled.addEventListener("change", () => {
+    state.highPassEnabled = els.highPassEnabled.checked;
+    saveState();
+    syncControls();
+    renderChart();
+  });
+
+  els.sealedSpeaker.addEventListener("change", () => {
+    state.sealedSpeaker = els.sealedSpeaker.checked;
+    saveState();
+    syncControls();
+    renderChart();
+  });
+
+  els.absorptionEnabled.addEventListener("change", () => {
+    state.absorptionEnabled = els.absorptionEnabled.checked;
+    saveState();
+    syncControls();
+    renderChart();
   });
 
   els.darkMode.addEventListener("change", () => {
@@ -108,9 +141,13 @@ function createDefaultState() {
   return {
     cabinetDepth: PARAMS.cabinetDepth.defaultValue,
     rearDistance: PARAMS.rearDistance.defaultValue,
+    highPassFrequency: PARAMS.highPassFrequency.defaultValue,
     flowResistivity: PARAMS.flowResistivity.defaultValue,
     absorberDepth: PARAMS.absorberDepth.defaultValue,
     airGap: PARAMS.airGap.defaultValue,
+    highPassEnabled: true,
+    sealedSpeaker: false,
+    absorptionEnabled: true,
     theme: sharedTheme() ?? preferredTheme(),
   };
 }
@@ -127,6 +164,9 @@ function loadState() {
       if (Number.isFinite(value)) fallback[parameter] = value;
     });
 
+    fallback.highPassEnabled = stored.highPassEnabled !== false;
+    fallback.sealedSpeaker = stored.sealedSpeaker === true;
+    fallback.absorptionEnabled = stored.absorptionEnabled !== false;
     fallback.theme = normalizeTheme(stored.theme);
   } catch {
     // The defaults keep the calculator usable when storage is unavailable.
@@ -191,6 +231,19 @@ function syncControls() {
   });
 
   els.darkMode.checked = state.theme === "dark";
+  els.highPassEnabled.checked = state.highPassEnabled;
+  els.highPassEnabledLabel.textContent = state.highPassEnabled ? "On" : "Off";
+  els.highPassFrequency.disabled = !state.highPassEnabled;
+  els.sealedSpeaker.checked = state.sealedSpeaker;
+  els.sealedSpeaker.disabled = !state.highPassEnabled;
+  els.highPassSlope.textContent = state.sealedSpeaker ? "12 dB/oct" : "24 dB/oct";
+  els.highPassCard.dataset.enabled = String(state.highPassEnabled);
+  els.absorptionEnabled.checked = state.absorptionEnabled;
+  els.absorptionEnabledLabel.textContent = state.absorptionEnabled ? "On" : "Off";
+  els.flowResistivity.disabled = !state.absorptionEnabled;
+  els.absorberDepth.disabled = !state.absorptionEnabled;
+  els.airGap.disabled = !state.absorptionEnabled;
+  els.absorptionCard.dataset.enabled = String(state.absorptionEnabled);
   els.effectiveDistance.textContent = `${formatDistance(driverToSurfaceDistance())} driver to absorber face`;
 }
 
@@ -259,9 +312,10 @@ function renderChart() {
         result.responseDb,
         result.reflectionDb,
         result.absorptionPercent,
+        result.highPassDb,
       ]),
       hovertemplate:
-        "<b>Result at listener</b><br>%{x:.0f} Hz<br>%{customdata[0]:.1f} dB<br>reflection %{customdata[1]:.1f} dB<br>surface absorption %{customdata[2]:.0f}%<extra></extra>",
+        "<b>Result at listener</b><br>%{x:.0f} Hz<br>%{customdata[0]:.1f} dB<br>reflected component %{customdata[1]:.1f} dB<br>speaker high pass %{customdata[3]:.1f} dB<br>surface absorption %{customdata[2]:.0f}%<extra></extra>",
     },
     {
       x: frequencies,
@@ -274,9 +328,14 @@ function renderChart() {
         width: 2,
         dash: "dot",
       },
-      customdata: results.map((result) => result.absorptionPercent),
+      customdata: results.map((result) => [
+        result.reflectionDb,
+        result.surfaceReflectionDb,
+        result.absorptionPercent,
+        result.highPassDb,
+      ]),
       hovertemplate:
-        "<b>Back-wall reflection</b><br>%{x:.0f} Hz<br>%{y:.1f} dB<br>surface absorption %{customdata:.0f}%<extra></extra>",
+        "<b>Back-wall reflection</b><br>%{x:.0f} Hz<br>%{customdata[0]:.1f} dB<br>surface reflection %{customdata[1]:.1f} dB<br>speaker high pass %{customdata[3]:.1f} dB<br>surface absorption %{customdata[2]:.0f}%<extra></extra>",
     },
     {
       x: nulls.map((entry) => entry.frequency),
@@ -383,16 +442,24 @@ function responseAtFrequency(frequency) {
   const reflectedAtListener = cmul(reflection, propagation);
   const summedPressure = cadd(c(1), reflectedAtListener);
   const reflectionMagnitude = cabs(reflection);
+  const highPassMagnitude = speakerHighPassMagnitude(frequency);
+  const interferenceMagnitude = cabs(summedPressure);
+  const highPassDb = amplitudeToDb(highPassMagnitude);
 
   return {
-    responseMagnitude: cabs(summedPressure),
-    responseDb: amplitudeToDb(cabs(summedPressure)),
-    reflectionDb: amplitudeToDb(reflectionMagnitude),
+    interferenceMagnitude,
+    responseMagnitude: highPassMagnitude * interferenceMagnitude,
+    responseDb: amplitudeToDb(highPassMagnitude * interferenceMagnitude),
+    reflectionDb: amplitudeToDb(highPassMagnitude * reflectionMagnitude),
+    surfaceReflectionDb: amplitudeToDb(reflectionMagnitude),
+    highPassDb,
     absorptionPercent: 100 * clamp01(1 - reflectionMagnitude ** 2),
   };
 }
 
 function surfaceReflectionCoefficient(frequency, air) {
+  if (!state.absorptionEnabled) return c(1);
+
   const z0 = air.density * air.speed;
   const k0 = (2 * Math.PI * frequency) / air.speed;
   let matrix = identityMatrix();
@@ -418,6 +485,13 @@ function surfaceReflectionCoefficient(frequency, air) {
 
   const surfaceImpedance = cdiv(matrix.a, matrix.c);
   return cdiv(csub(surfaceImpedance, c(z0)), cadd(surfaceImpedance, c(z0)));
+}
+
+function speakerHighPassMagnitude(frequency) {
+  if (!state.highPassEnabled) return 1;
+  const order = state.sealedSpeaker ? 2 : 4;
+  const ratio = state.highPassFrequency / frequency;
+  return 1 / Math.sqrt(1 + ratio ** (2 * order));
 }
 
 function allardChampouxLayer(frequency, flowResistivity, air) {
@@ -473,9 +547,9 @@ function findResponseNulls(frequencies, results) {
   const candidates = [];
 
   for (let index = 1; index < frequencies.length - 1; index += 1) {
-    const previous = results[index - 1].responseMagnitude;
-    const current = results[index].responseMagnitude;
-    const next = results[index + 1].responseMagnitude;
+    const previous = results[index - 1].interferenceMagnitude;
+    const current = results[index].interferenceMagnitude;
+    const next = results[index + 1].interferenceMagnitude;
 
     if (current <= previous && current < next) {
       const frequency = refineNullFrequency(
@@ -501,8 +575,8 @@ function refineNullFrequency(lowerFrequency, upperFrequency) {
   let upper = Math.log(upperFrequency);
   let left = upper - goldenRatio * (upper - lower);
   let right = lower + goldenRatio * (upper - lower);
-  let leftValue = responseAtFrequency(Math.exp(left)).responseMagnitude;
-  let rightValue = responseAtFrequency(Math.exp(right)).responseMagnitude;
+  let leftValue = responseAtFrequency(Math.exp(left)).interferenceMagnitude;
+  let rightValue = responseAtFrequency(Math.exp(right)).interferenceMagnitude;
 
   for (let iteration = 0; iteration < 32; iteration += 1) {
     if (leftValue < rightValue) {
@@ -510,13 +584,13 @@ function refineNullFrequency(lowerFrequency, upperFrequency) {
       right = left;
       rightValue = leftValue;
       left = upper - goldenRatio * (upper - lower);
-      leftValue = responseAtFrequency(Math.exp(left)).responseMagnitude;
+      leftValue = responseAtFrequency(Math.exp(left)).interferenceMagnitude;
     } else {
       lower = left;
       left = right;
       leftValue = rightValue;
       right = lower + goldenRatio * (upper - lower);
-      rightValue = responseAtFrequency(Math.exp(right)).responseMagnitude;
+      rightValue = responseAtFrequency(Math.exp(right)).interferenceMagnitude;
     }
   }
 
