@@ -3,14 +3,14 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Back-wall SBIR Lab</title>
+    <title>Front Wall SBIR Lab</title>
     <link rel="icon" href="./favicon.ico" sizes="any">
     <link rel="icon" href="./site-icon.svg" type="image/svg+xml">
     <link rel="icon" href="./site-icon.png" type="image/png" sizes="512x512">
     <link rel="apple-touch-icon" href="./apple-touch-icon.png" sizes="180x180">
-    <link rel="stylesheet" href="./styles.css?v=3">
+    <link rel="stylesheet" href="./styles.css?v=4">
     <script src="https://cdn.plot.ly/plotly-2.32.0.min.js" defer></script>
-    <script src="./sbir.js?v=2" defer></script>
+    <script src="./sbir.js?v=4" defer></script>
   </head>
   <body>
     <main class="app-shell">
@@ -60,7 +60,7 @@
               <a class="tool-tab" href="./sbir.html" aria-current="page">SBIR</a>
             </nav>
             <div class="title-with-info">
-              <h1>Back-wall SBIR Lab</h1>
+              <h1>Front Wall Speaker Boundary Interference Lab</h1>
               <button
                 class="model-info"
                 type="button"
@@ -96,9 +96,12 @@
 
         <aside class="control-panel" aria-label="SBIR controls">
           <div class="panel-heading">
-            <div class="panel-title">
+            <div class="panel-title setup-title">
               <h2>Setup</h2>
-              <span id="effectiveDistance" class="chart-status"></span>
+              <div class="setup-info chart-status">
+                <span id="driverDistance"></span>
+                <span id="listenerWallDistance"></span>
+              </div>
             </div>
           </div>
 
@@ -130,7 +133,7 @@
                     <span>Speaker front to listener</span>
                     <strong id="listenerDistanceValue"></strong>
                   </span>
-                  <input id="listenerDistance" type="range" min="500" max="10000" step="100">
+                  <input id="listenerDistance" type="range" min="500" max="5000" step="100">
                 </label>
               </div>
             </section>
@@ -175,7 +178,7 @@
                   <label class="switch-control">
                     <input id="absorptionEnabled" type="checkbox" aria-label="Enable absorption behind speaker">
                     <span class="switch-track" aria-hidden="true"></span>
-                    <span id="absorptionEnabledLabel">On</span>
+                    <span id="absorptionEnabledLabel">Off</span>
                   </label>
                 </div>
               </div>

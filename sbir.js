@@ -25,8 +25,8 @@ const PARAMS = {
     unit: "mm",
   },
   listenerDistance: {
-    defaultValue: 2500,
-    unit: "mm",
+    defaultValue: 1000,
+    unit: "m",
   },
   highPassFrequency: {
     defaultValue: 50,
@@ -89,7 +89,8 @@ function bindModelInfoTooltip() {
 function cacheElements() {
   els.chart = document.querySelector("#chart");
   els.chartStatus = document.querySelector("#chartStatus");
-  els.effectiveDistance = document.querySelector("#effectiveDistance");
+  els.driverDistance = document.querySelector("#driverDistance");
+  els.listenerWallDistance = document.querySelector("#listenerWallDistance");
   els.darkMode = document.querySelector("#darkMode");
   els.resetAllButton = document.querySelector("#resetAllButton");
   els.highPassCard = document.querySelector("#highPassCard");
@@ -169,7 +170,7 @@ function createDefaultState() {
     airGap: PARAMS.airGap.defaultValue,
     highPassEnabled: true,
     sealedSpeaker: false,
-    absorptionEnabled: true,
+    absorptionEnabled: false,
     theme: sharedTheme() ?? preferredTheme(),
   };
 }
@@ -188,7 +189,7 @@ function loadState() {
 
     fallback.highPassEnabled = stored.highPassEnabled !== false;
     fallback.sealedSpeaker = stored.sealedSpeaker === true;
-    fallback.absorptionEnabled = stored.absorptionEnabled !== false;
+    fallback.absorptionEnabled = stored.absorptionEnabled === true;
     fallback.theme = normalizeTheme(stored.theme);
   } catch {
     // The defaults keep the calculator usable when storage is unavailable.
@@ -249,7 +250,7 @@ function syncControls() {
     const value = clampToInput(input, state[parameter]);
     state[parameter] = value;
     input.value = value;
-    els[`${parameter}Value`].textContent = `${formatNumber(value)} ${meta.unit}`;
+    els[`${parameter}Value`].textContent = formatParameterValue(parameter, value, meta.unit);
   });
 
   els.darkMode.checked = state.theme === "dark";
@@ -266,7 +267,10 @@ function syncControls() {
   els.absorberDepth.disabled = !state.absorptionEnabled;
   els.airGap.disabled = !state.absorptionEnabled;
   els.absorptionCard.dataset.enabled = String(state.absorptionEnabled);
-  els.effectiveDistance.textContent = `${formatDistance(driverToSurfaceDistance())} driver to absorber face`;
+  els.driverDistance.textContent =
+    `${formatDistance(driverToSurfaceDistance())} driver to absorber face`;
+  els.listenerWallDistance.textContent =
+    `Listener ${formatDistance(listenerToFrontWallDistance())} from front wall`;
 }
 
 function clampToInput(input, value) {
@@ -643,6 +647,13 @@ function driverToSurfaceDistance() {
   return (state.cabinetDepth + state.rearDistance) / 1000;
 }
 
+function listenerToFrontWallDistance() {
+  const treatmentDepth = state.absorptionEnabled
+    ? (state.absorberDepth + state.airGap) / 1000
+    : 0;
+  return driverToSurfaceDistance() + treatmentDepth + state.listenerDistance / 1000;
+}
+
 function amplitudeToDb(amplitude) {
   return 20 * Math.log10(Math.max(amplitude, 1e-6));
 }
@@ -664,8 +675,21 @@ function formatNumber(value) {
   return new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 }).format(value);
 }
 
+function formatParameterValue(parameter, value, unit) {
+  if (parameter === "listenerDistance") {
+    return `${formatMeters(value / 1000, 1)} ${unit}`;
+  }
+  return `${formatNumber(value)} ${unit}`;
+}
+
 function formatDistance(meters) {
-  return `${meters.toFixed(2)} m`;
+  return `${formatMeters(meters, 2)} m`;
+}
+
+function formatMeters(meters, maximumFractionDigits) {
+  return new Intl.NumberFormat("en-US", {
+    maximumFractionDigits,
+  }).format(meters);
 }
 
 function formatFrequency(frequency) {

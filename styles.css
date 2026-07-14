@@ -624,6 +624,17 @@ button:not(:disabled):active {
   gap: 10px;
 }
 
+.setup-title {
+  align-items: flex-start;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.setup-info {
+  display: grid;
+  gap: 2px;
+}
+
 .panel-actions {
   display: flex;
   align-items: center;
