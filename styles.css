@@ -126,46 +126,6 @@ button:disabled {
   min-width: 0;
 }
 
-.tool-tabs {
-  width: fit-content;
-  min-height: 30px;
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  margin: 0 0 6px;
-  padding: 3px;
-  border: 1px solid var(--line);
-  border-radius: 7px;
-  background: var(--surface);
-}
-
-.tool-tab {
-  min-height: 24px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0 9px;
-  border-radius: 5px;
-  color: var(--muted);
-  font-size: 0.76rem;
-  font-weight: 780;
-  line-height: 1;
-  text-decoration: none;
-  transition:
-    background 140ms ease,
-    color 140ms ease;
-}
-
-.tool-tab:hover {
-  background: var(--accent-soft);
-  color: var(--ink);
-}
-
-.tool-tab[aria-current="page"] {
-  background: var(--accent);
-  color: var(--bg);
-}
-
 .title-with-info {
   min-width: 0;
   display: flex;
