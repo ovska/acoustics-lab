@@ -33,19 +33,28 @@
   }
   function drawElevation(canvas,s,frequency){
     const {c,w,h}=setup(canvas),C=colors(),g=G.solve(s);c.fillStyle=C.bg;c.fillRect(0,0,w,h);
-    const ymin=-.12,ymax=Math.max(g.speaker.y,g.rect.y1)*1.08,zmin=Math.min(-g.ear.z,-.3),zmax=Math.max(g.ear.z,g.speaker.z)+.32,pad={l:43,r:20,t:18,b:28},sc=Math.min((w-pad.l-pad.r)/(ymax-ymin),(h-pad.t-pad.b)/(zmax-zmin));const to=(y,z)=>({x:pad.l+(y-ymin)*sc,y:h-pad.b-(z-zmin)*sc});
+    const tiltRad=s.tilt*Math.PI/180,tweeterOffset=s.coaxial?0:G.tweeterHeightCm(s)-s.h_woofer;
+    const tweeterZ=(s.h_woofer+tweeterOffset)*.01,tweeterY=g.speaker.y-tweeterOffset*.01*Math.tan(tiltRad);
+    const ymin=Math.min(-.12,tweeterY-.15),ymax=Math.max(g.speaker.y,g.rect.y1,tweeterY+.15)*1.08;
+    const zmin=Math.min(-g.ear.z,-.3,g.speaker.z-.15,tweeterZ-.15),zmax=Math.max(g.ear.z,g.speaker.z+.2,tweeterZ+.2);
+    const pad={l:43,r:20,t:18,b:28},sc=Math.min((w-pad.l-pad.r)/(ymax-ymin),(h-pad.t-pad.b)/(zmax-zmin));const to=(y,z)=>({x:pad.l+(y-ymin)*sc,y:h-pad.b-(z-zmin)*sc});
     grid(c,w,h,(x,y)=>to(x,y),{x0:ymin,x1:ymax,y0:zmin,y1:zmax},C,.25);
     const deskA=to(g.rect.y0,0),deskB=to(g.rect.y1,0);line(c,deskA,deskB,C.text,4);if(s.absorber_on){line(c,to(s.absorber_near*.01,0),to(s.absorber_far*.01,0),C.purple,7)}
     const ear=to(0,g.ear.z),img=to(0,-g.ear.z),sp=to(g.speaker.y,g.speaker.z),bp=to(g.bounce.y,0);
     line(c,img,sp,C.muted,1,[5,5]);line(c,ear,sp,C.blue,2);line(c,ear,bp,C.amber,2,[6,4]);line(c,bp,sp,C.amber,2,[6,4]);circle(c,ear,6,C.cyan);circle(c,img,5,C.panel,C.muted);circle(c,bp,5,g.onDesk?C.cyan:C.red);
-    // Tilted cabinet and acoustic axis.
-    const tilt=-s.tilt*Math.PI/180;c.save();c.translate(sp.x,sp.y);c.rotate(tilt);c.fillStyle=C.blue;c.globalAlpha=.8;c.fillRect(-9,-25,18,50);circle(c,{x:-4,y:0},5,C.bg);c.restore();
+    // Size the tilted cabinet around both drivers. The offset is vertical, so its
+    // distance along the tilted baffle is slightly longer than the height change.
+    const tilt=-tiltRad,localTweeterY=-tweeterOffset*.01*sc/Math.cos(tiltRad);
+    const wooferRadius=Math.max(5,Math.min(22,s.piston_radius*.01*sc)),tweeterRadius=Math.max(3,Math.min(7,wooferRadius*.42));
+    const halfWidth=Math.max(10,wooferRadius+5),cabinetTop=Math.min(-25,-wooferRadius-8,localTweeterY-tweeterRadius-8),cabinetBottom=Math.max(25,wooferRadius+8,localTweeterY+tweeterRadius+8);
+    c.save();c.translate(sp.x,sp.y);c.rotate(tilt);c.fillStyle=C.blue;c.globalAlpha=.8;c.fillRect(-halfWidth,cabinetTop,halfWidth*2,cabinetBottom-cabinetTop);c.globalAlpha=1;c.strokeStyle=C.blue;c.strokeRect(-halfWidth,cabinetTop,halfWidth*2,cabinetBottom-cabinetTop);c.lineWidth=1.5;circle(c,{x:0,y:0},wooferRadius,C.bg,C.cyan);circle(c,{x:0,y:localTweeterY},tweeterRadius,C.bg,s.two_way?C.cyan2:C.muted);c.restore();
+    const tweeter={x:sp.x+localTweeterY*Math.sin(tiltRad),y:sp.y+localTweeterY*Math.cos(tiltRad)};
     const axisLen=.42*sc,axisEnd={x:sp.x-axisLen*Math.cos(tilt),y:sp.y-axisLen*Math.sin(tilt)};arrow(c,sp,axisEnd,C.purple);
     // A frequency-scaled schematic piston lobe around the real axis.
     const narrow=Math.min(.9,.25+frequency/7000);c.save();c.translate(sp.x,sp.y);c.rotate(tilt+Math.PI);c.beginPath();c.moveTo(0,0);c.bezierCurveTo(axisLen*.35,-axisLen*(1-narrow)*.55,axisLen*.85,-axisLen*(1-narrow)*.3,axisLen,0);c.bezierCurveTo(axisLen*.85,axisLen*(1-narrow)*.3,axisLen*.35,axisLen*(1-narrow)*.55,0,0);c.fillStyle=C.purple;c.globalAlpha=.13;c.fill();c.restore();
     // Grazing angle arc.
     c.strokeStyle=C.amber;c.beginPath();c.arc(bp.x,bp.y,31,Math.PI,Math.PI+g.grazing);c.stroke();
-    c.fillStyle=C.text;c.font='11px system-ui';c.fillText(`grazing ${(g.grazing*180/Math.PI).toFixed(1)}°`,bp.x-12,bp.y-18);c.fillStyle=C.muted;c.fillText('image ear',img.x+8,img.y+4);c.fillText('z = 0 desktop',deskA.x,deskA.y+17);c.fillText('y forward →',w-82,h-9);
+    c.fillStyle=C.text;c.font='11px system-ui';c.fillText(`grazing ${(g.grazing*180/Math.PI).toFixed(1)}°`,bp.x-12,bp.y-18);c.fillStyle=s.two_way?C.cyan2:C.muted;c.fillText('tweeter',tweeter.x+tweeterRadius+5,tweeter.y-4);c.fillStyle=C.muted;c.fillText('image ear',img.x+8,img.y+4);c.fillText('z = 0 desktop',deskA.x,deskA.y+17);c.fillText('y forward →',w-82,h-9);
   }
   ns.viz={drawPlan,drawElevation};
 })(window);

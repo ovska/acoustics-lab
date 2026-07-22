@@ -13,6 +13,13 @@
     return Math.min(x - x0, x1 - x, y - y0, y1 - y);
   }
 
+  function tweeterHeightCm(s) {
+    // Accept the former absolute value as a fallback for old embedded callers.
+    const offset = Number.isFinite(s.tweeter_offset) ? s.tweeter_offset :
+      Number.isFinite(s.h_tweeter) ? s.h_tweeter - s.h_woofer : 20;
+    return s.h_woofer + offset;
+  }
+
   function solve(s) {
     const cm = .01, theta = rad(s.theta);
     const D = s.D * cm, he = s.h_ear * cm, hw = s.h_woofer * cm;
@@ -74,5 +81,5 @@
     for(let i=0;i<n;i++){out[i]=f;f*=ratio;} return out;
   }
 
-  ns.geometry={TAU,rad,solve,zone,coverage,pointInZone,frequencyGrid,signedRectDistance};
+  ns.geometry={TAU,rad,solve,zone,coverage,pointInZone,frequencyGrid,signedRectDistance,tweeterHeightCm};
 })(window);

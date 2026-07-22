@@ -9,7 +9,7 @@
 
   function driverList(s){
     const out=[{h:s.h_woofer*.01,band:'low'}];
-    if(s.two_way&&Number.isFinite(s.h_tweeter)) out.push({h:(s.coaxial?s.h_woofer:s.h_tweeter)*.01,band:'high'});
+    if(s.two_way) out.push({h:(s.coaxial?s.h_woofer:G.tweeterHeightCm(s))*.01,band:'high'});
     return out;
   }
   function crossoverWeight(f,band,s){
@@ -136,7 +136,7 @@
     return {gdF:Float64Array.from(gdF),gd:Float64Array.from(gd),time:Float64Array.from(time),etc:Float64Array.from(etc)};
   }
   function verticalPolar(s){
-    const angles=new Float64Array(121),db=new Float64Array(121),f=s.crossover,D=s.D*.01,k=2*Math.PI*f/s.c,hw=s.h_woofer*.01,ht=(s.coaxial?s.h_woofer:s.h_tweeter)*.01;
+    const angles=new Float64Array(121),db=new Float64Array(121),f=s.crossover,D=s.D*.01,k=2*Math.PI*f/s.c,hw=s.h_woofer*.01,ht=(s.coaxial?s.h_woofer:G.tweeterHeightCm(s))*.01;
     for(let i=0;i<angles.length;i++){const a=(-60+i)*Math.PI/180,y=-D*Math.cos(a),z=s.h_ear*.01+D*Math.sin(a),rw=Math.hypot(D*Math.cos(a),z-hw),rt=Math.hypot(D*Math.cos(a),z-ht);const p=add(scale(cexpNeg(k*rw),crossoverWeight(f,'low',s)/rw),scale(cexpNeg(k*rt),crossoverWeight(f,'high',s)/rt));angles[i]=a*180/Math.PI;db[i]=20*Math.log10(Math.max(1e-5,mag(p)*D/Math.SQRT2));}
     return {angles,db};
   }
