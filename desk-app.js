@@ -3,7 +3,7 @@
    never the y/forward component (which is D cos theta). */
 (function(){
   'use strict';const P=window.DeskPhysics,{geometry:G,models:M,viz:V,plots:Plots}=P;
-  const defaults={model:'kirchhoff',h_ear:48,h_woofer:29.5,h_tweeter:44,D:120,theta:30,tilt:0,desk_near:30,desk_far:70,desk_width:160,absorber_on:false,absorber_near:30,absorber_far:64,absorber_thickness:4,absorber_sigma:10000,c:343,rigid_R:.97,piston_radius:6.5,directivity:'piston',gridStep:.02,smoothing:0,two_way:false,coaxial:false,crossover:2000,crossover_order:4,band_lo:300,band_hi:3000};
+  const defaults={model:'kirchhoff',h_ear:48,h_woofer:29.5,h_tweeter:44,D:120,theta:30,tilt:0,desk_near:30,desk_far:70,desk_width:160,absorber_on:false,absorber_near:30,absorber_far:64,absorber_thickness:4,absorber_sigma:10000,c:343,rigid_R:.97,piston_radius:6.5,directivity:'piston',gridStep:.02,smoothing:0,two_way:false,coaxial:false,crossover:2000,crossover_order:4,band_lo:300,band_hi:3000,viz_auto:false};
   let state={...defaults},result=null,timeResult=null,ghost=null,pending=0,sweepResult=null,computeTimer=null,exactTimer=null;
   const $=id=>document.getElementById(id), fmt=(v,n=1)=>Number(v).toFixed(n), debounce=(fn,ms)=>{let t;return(...a)=>{clearTimeout(t);t=setTimeout(()=>fn(...a),ms)}};
   const specs={
@@ -21,12 +21,17 @@
     ['crossover','crossover_order'].forEach(n=>$('twoWayControls').append(control(n)));
     ['c','band_lo','band_hi'].forEach(n=>$('analysisControls').append(control(n)));
   }
-  function syncControls(){for(const n of Object.keys(specs)){const r=$(n+'_range'),q=$(n+'_number');if(r){r.value=state[n];q.value=state[n]}}$('absorber_on').checked=state.absorber_on;$('two_way').checked=state.two_way;$('coaxial').checked=state.coaxial;$('directivity').value=state.directivity;$('gridStep').value=String(state.gridStep);$('smoothing').value=String(state.smoothing);document.querySelectorAll('[data-model]').forEach(b=>b.classList.toggle('active',b.dataset.model===state.model));updateVisibility()}
+  function syncControls(){for(const n of Object.keys(specs)){const r=$(n+'_range'),q=$(n+'_number');if(r){r.value=state[n];q.value=state[n]}}$('absorber_on').checked=state.absorber_on;$('two_way').checked=state.two_way;$('coaxial').checked=state.coaxial;$('viz_auto').checked=state.viz_auto;$('directivity').value=state.directivity;$('gridStep').value=String(state.gridStep);$('smoothing').value=String(state.smoothing);document.querySelectorAll('[data-model]').forEach(b=>b.classList.toggle('active',b.dataset.model===state.model));updateVisibility()}
   function updateVisibility(){$('absorberControls').style.opacity=state.absorber_on?'1':'.42';$('twoWayControls').style.opacity=state.two_way?'1':'.42';$('coaxial').disabled=!state.two_way;$('polarFigure').style.display=state.two_way?'block':'none'}
   function enforce(){if(state.desk_near>state.desk_far)state.desk_far=state.desk_near;if(state.absorber_near>state.absorber_far)state.absorber_far=state.absorber_near;if(state.band_lo>state.band_hi)state.band_hi=state.band_lo;}
-  function vizFrequency(){return Math.pow(10,Number($('viz_frequency').value))}
+  function vizFrequency(){
+    const slider=$('viz_frequency');slider.disabled=state.viz_auto;
+    if(!state.viz_auto)return Math.pow(10,Number(slider.value));
+    const notch=G.solve(state).notch(1),shown=Math.max(100,Math.min(5000,notch));slider.value=Math.log10(shown);return notch;
+  }
+  function formatVizFrequency(f){if(f>=1e6)return `${(f/1e6).toFixed(2)} MHz`;if(f>=1000)return `${(f/1000).toFixed(2)} kHz`;return `${f.toFixed(0)} Hz`}
   function updateGeometryOnly(){
-    const f=vizFrequency();$('viz_frequency_out').textContent=f>=1000?`${(f/1000).toFixed(2)} kHz`:`${f.toFixed(0)} Hz`;V.drawPlan($('planCanvas'),state,f);V.drawElevation($('elevationCanvas'),state,f);updateHeadline(result);
+    const f=vizFrequency();$('viz_frequency_out').textContent=formatVizFrequency(f);V.drawPlan($('planCanvas'),state,f);V.drawElevation($('elevationCanvas'),state,f);updateHeadline(result);
   }
   function updateHeadline(res){const g=G.solve(state),notches=[1,2,3].map(n=>g.notch(n));$('bounceReadout').textContent=`${fmt(g.bounce.y*100)} fwd · ${fmt(g.bounce.x*100)} lat`;$('deltaReadout').textContent=`${fmt(g.delta*100,2)} cm`;$('notchReadout').textContent=notches[0]>=1000?`${fmt(notches[0]/1000,2)} kHz`:`${fmt(notches[0],0)} Hz`;$('grazingReadout').textContent=`${fmt(g.grazing*180/Math.PI)}° · edge ${g.edge>=0?'+':''}${fmt(g.edge*100)} cm`;
     if(res){const comb=M.combDepth(res.frequencies,res.db,state.band_lo,state.band_hi);$('combReadout').textContent=`${fmt(comb.swing)} dB`}
@@ -59,7 +64,7 @@
     $('preset').onchange=e=>applyPreset(e.target.value);$('freeze').onclick=freeze;$('reset').onclick=()=>{state={...defaults};$('preset').value='reference';ghost=null;$('freeze').textContent='Freeze A/B trace';syncControls();updateGeometryOnly();computeNow()};
     $('modelChoice').onclick=e=>{const m=e.target.dataset.model;if(!m)return;state.model=m;syncControls();updateGeometryOnly();computeNow()};
     for(const id of ['absorber_on','two_way','coaxial'])$(id).onchange=e=>{state[id]=e.target.checked;updateVisibility();updateGeometryOnly();schedule()};
-    $('directivity').onchange=e=>{state.directivity=e.target.value;schedule()};$('smoothing').onchange=e=>{state.smoothing=Number(e.target.value);plotAll()};$('gridStep').onchange=e=>{state.gridStep=Number(e.target.value);schedule()};$('viz_frequency').oninput=updateGeometryOnly;$('runSweep').onclick=runSweep;
+    $('directivity').onchange=e=>{state.directivity=e.target.value;schedule()};$('smoothing').onchange=e=>{state.smoothing=Number(e.target.value);plotAll()};$('gridStep').onchange=e=>{state.gridStep=Number(e.target.value);schedule()};$('viz_frequency').oninput=updateGeometryOnly;$('viz_auto').onchange=e=>{state.viz_auto=e.target.checked;updateGeometryOnly()};$('runSweep').onclick=runSweep;
     window.addEventListener('resize',debounce(()=>{updateGeometryOnly();plotAll();if(sweepResult)Plots.heatmap($('heatmap'),sweepResult,loadCell)},100));matchMedia('(prefers-color-scheme: light)').addEventListener?.('change',()=>{updateGeometryOnly();plotAll()});
   }
   mountControls();bind();syncControls();updateGeometryOnly();computeNow();

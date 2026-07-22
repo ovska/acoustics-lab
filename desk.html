@@ -86,7 +86,10 @@
         <div class="panel-heading">
           <div><p class="eyebrow">Geometry</p><h2>Where the reflection forms</h2></div>
           <div class="frequency-control">
-            <label for="viz_frequency">Fresnel frequency <output id="viz_frequency_out">1.00 kHz</output></label>
+            <div class="frequency-header">
+              <label for="viz_frequency">Fresnel frequency <output id="viz_frequency_out">1.00 kHz</output></label>
+              <label class="auto-toggle"><input id="viz_auto" type="checkbox"> Auto</label>
+            </div>
             <input id="viz_frequency" type="range" min="2" max="3.699" step="0.001" value="3">
           </div>
         </div>
