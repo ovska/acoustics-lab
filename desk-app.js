@@ -4,7 +4,7 @@
 (function(){
   'use strict';const P=window.DeskPhysics,{geometry:G,models:M,viz:V,plots:Plots}=P;
   const defaults={model:'kirchhoff',h_ear:48,h_woofer:29.5,h_tweeter:44,D:120,theta:30,tilt:0,desk_near:30,desk_far:70,desk_width:160,absorber_on:false,absorber_near:30,absorber_far:64,absorber_thickness:4,absorber_sigma:10000,c:343,rigid_R:.97,piston_radius:6.5,directivity:'piston',gridStep:.02,smoothing:0,two_way:false,coaxial:false,crossover:2000,crossover_order:4,band_lo:300,band_hi:3000};
-  let state={...defaults},result=null,timeResult=null,ghost=null,pending=0,sweepResult=null;
+  let state={...defaults},result=null,timeResult=null,ghost=null,pending=0,sweepResult=null,computeTimer=null,exactTimer=null;
   const $=id=>document.getElementById(id), fmt=(v,n=1)=>Number(v).toFixed(n), debounce=(fn,ms)=>{let t;return(...a)=>{clearTimeout(t);t=setTimeout(()=>fn(...a),ms)}};
   const specs={
     h_ear:['Ear height',20,80,.5,'cm'],h_woofer:['Woofer height',-20,80,.5,'cm'],h_tweeter:['Tweeter height',-20,90,.5,'cm'],D:['Listening distance D',60,250,1,'cm'],theta:['Triangle half-angle',10,45,.5,'°'],tilt:['Cabinet tilt',-20,20,.5,'°'],desk_near:['Desk near edge',0,60,1,'cm'],desk_far:['Desk far edge',20,120,1,'cm'],desk_width:['Desk width',40,300,2,'cm'],
@@ -38,22 +38,29 @@
     if(state.two_way)Plots.polar($('polarPlot'),M.verticalPolar(state));updateHeadline(result);
   }
   function calculate(model,withTime){const f=G.frequencyGrid(400);return {r:M.evaluate(state,f,model),t:withTime?M.timeAnalysis({...state,model}):null}}
-  function compute(){const token=++pending;if(state.model==='kirchhoff'){
+  function compute(token){if(token!==pending)return;if(state.model==='kirchhoff'){
       const preview=calculate('fresnel',false);if(token!==pending)return;result=preview.r;updateHeadline(result);plotAll();$('status').textContent+=' Kirchhoff integral is updating…';
-      setTimeout(()=>{if(token!==pending)return;const exact=calculate('kirchhoff',true);if(token!==pending)return;result=exact.r;timeResult=exact.t;const g=result.grid,waveStep=state.c/20000/6;$('qualityNote').textContent=`${g.n.toLocaleString()} elements · ${fmt(g.step*100,2)} cm cells. λ/6 at 20 kHz is ${fmt(waveStep*100,3)} cm; this bounded live grid is an engineering preview above ${fmt(state.c/(6*g.step)/1000,1)} kHz.`;plotAll();updateHeadline(result);updateGeometryOnly();},30);
+      exactTimer=setTimeout(()=>{if(token!==pending)return;const exact=calculate('kirchhoff',true);if(token!==pending)return;result=exact.r;timeResult=exact.t;const g=result.grid,waveStep=state.c/20000/6;$('qualityNote').textContent=`${g.n.toLocaleString()} elements · ${fmt(g.step*100,2)} cm cells. λ/6 at 20 kHz is ${fmt(waveStep*100,3)} cm; this bounded live grid is an engineering preview above ${fmt(state.c/(6*g.step)/1000,1)} kHz.`;plotAll();updateHeadline(result);updateGeometryOnly();},60);
     }else{const exact=calculate(state.model,true);if(token!==pending)return;result=exact.r;timeResult=exact.t;$('qualityNote').textContent=state.model==='fresnel'?'First-zone energy coverage is integrated from the same ellipse shown in plan.':'Point reflector; finite-edge diffraction is not represented.';plotAll();updateGeometryOnly();}}
-  const schedule=debounce(compute,70);
-  function applyPreset(name){state={...state,...({reference:{h_ear:48,h_woofer:29.5,h_tweeter:44,D:120,theta:30,tilt:0},lowered:{h_woofer:14.5,tilt:10},raised:{h_woofer:59.5,tilt:-8},ear:{h_woofer:48,tilt:0}}[name]||{})};syncControls();updateGeometryOnly();compute()}
+  function cancelQueuedCalculations(){clearTimeout(computeTimer);clearTimeout(exactTimer);computeTimer=null;exactTimer=null;}
+  function schedule(){
+    cancelQueuedCalculations();const token=++pending,delay=state.model==='kirchhoff'?650:180;
+    updateHeadline(result);
+    $('status').textContent+=state.model==='kirchhoff'?' Response and time plots update after the slider settles.':' Response plots update after the slider settles.';
+    computeTimer=setTimeout(()=>{computeTimer=null;compute(token)},delay);
+  }
+  function computeNow(){cancelQueuedCalculations();const token=++pending;compute(token)}
+  function applyPreset(name){state={...state,...({reference:{h_ear:48,h_woofer:29.5,h_tweeter:44,D:120,theta:30,tilt:0},lowered:{h_woofer:14.5,tilt:10},raised:{h_woofer:59.5,tilt:-8},ear:{h_woofer:48,tilt:0}}[name]||{})};syncControls();updateGeometryOnly();computeNow()}
   function freeze(){if(!result)return;ghost={state:{...state},result:{...result,frequencies:new Float64Array(result.frequencies),db:new Float64Array(result.db),coverage:new Float64Array(result.coverage)},time:timeResult?{gdF:new Float64Array(timeResult.gdF),gd:new Float64Array(timeResult.gd),time:new Float64Array(timeResult.time),etc:new Float64Array(timeResult.etc)}:null};$('freeze').textContent='Update frozen trace';plotAll()}
   function sweepMetrics(s){const g=G.solve(s),freq=G.frequencyGrid(84,200,5000),db=new Float64Array(freq.length),ph=new Float64Array(freq.length);for(let i=0;i<freq.length;i++){const f=freq[i],k=2*Math.PI*f/s.c,cov=G.coverage(s,g,f,18),a=s.rigid_R*Math.sqrt(cov.fraction)*g.direct/g.reflected,re=1+a*Math.cos(-k*g.delta),im=a*Math.sin(-k*g.delta);db[i]=20*Math.log10(Math.max(1e-6,Math.hypot(re,im)));ph[i]=Math.atan2(im,re)}const comb=M.combDepth(freq,db,s.band_lo,s.band_hi).swing;let gd=0;for(let i=1;i<freq.length-1;i++){let d=ph[i+1]-ph[i-1];while(d>Math.PI)d-=2*Math.PI;while(d<-Math.PI)d+=2*Math.PI;gd=Math.max(gd,Math.abs(-d/(2*Math.PI*(freq[i+1]-freq[i-1]))*1000));}return {comb,gd}}
   function runSweep(){const xKey=$('sweepX').value,yKey=$('sweepY').value,x0=Number($('sweepXMin').value),x1=Number($('sweepXMax').value),y0=Number($('sweepYMin').value),y1=Number($('sweepYMax').value),nx=15,ny=yKey==='none'?1:13,xs=Array.from({length:nx},(_,i)=>x0+(x1-x0)*i/(nx-1)),ys=Array.from({length:ny},(_,i)=>y0+(y1-y0)*(ny===1?0:i/(ny-1))),values=new Float64Array(nx*ny),rank=[];for(let j=0;j<ny;j++)for(let i=0;i<nx;i++){const s={...state,[xKey]:xs[i]};if(yKey!=='none')s[yKey]=ys[j];const m=sweepMetrics(s);values[j*nx+i]=m.comb;rank.push({i,j,x:xs[i],y:ys[j],...m})}rank.sort((a,b)=>(a.gd+.15*a.comb)-(b.gd+.15*b.comb));sweepResult={xs,ys,values,min:Math.min(...values),max:Math.max(...values),xLabel:specs[xKey][0],yLabel:yKey==='none'?'single row':specs[yKey][0],xKey,yKey,rank};Plots.heatmap($('heatmap'),sweepResult,loadCell);const body=$('ranking');body.innerHTML='';rank.slice(0,8).forEach((r,k)=>{const tr=document.createElement('tr');tr.innerHTML=`<td>${k+1}</td><td>${xKey} ${fmt(r.x)}${yKey==='none'?'':` · ${yKey} ${fmt(r.y)}`}</td><td>${fmt(r.comb)} dB</td><td>${fmt(r.gd)} ms</td>`;tr.onclick=()=>loadCell(r.i,r.j);body.append(tr)})}
-  function loadCell(i,j){if(!sweepResult)return;state[sweepResult.xKey]=sweepResult.xs[i];if(sweepResult.yKey!=='none')state[sweepResult.yKey]=sweepResult.ys[j];syncControls();updateGeometryOnly();compute();window.scrollTo({top:0,behavior:'smooth'})}
+  function loadCell(i,j){if(!sweepResult)return;state[sweepResult.xKey]=sweepResult.xs[i];if(sweepResult.yKey!=='none')state[sweepResult.yKey]=sweepResult.ys[j];syncControls();updateGeometryOnly();computeNow();window.scrollTo({top:0,behavior:'smooth'})}
   function bind(){
-    $('preset').onchange=e=>applyPreset(e.target.value);$('freeze').onclick=freeze;$('reset').onclick=()=>{state={...defaults};$('preset').value='reference';ghost=null;$('freeze').textContent='Freeze A/B trace';syncControls();compute()};
-    $('modelChoice').onclick=e=>{const m=e.target.dataset.model;if(!m)return;state.model=m;syncControls();compute()};
+    $('preset').onchange=e=>applyPreset(e.target.value);$('freeze').onclick=freeze;$('reset').onclick=()=>{state={...defaults};$('preset').value='reference';ghost=null;$('freeze').textContent='Freeze A/B trace';syncControls();updateGeometryOnly();computeNow()};
+    $('modelChoice').onclick=e=>{const m=e.target.dataset.model;if(!m)return;state.model=m;syncControls();updateGeometryOnly();computeNow()};
     for(const id of ['absorber_on','two_way','coaxial'])$(id).onchange=e=>{state[id]=e.target.checked;updateVisibility();updateGeometryOnly();schedule()};
     $('directivity').onchange=e=>{state.directivity=e.target.value;schedule()};$('smoothing').onchange=e=>{state.smoothing=Number(e.target.value);plotAll()};$('gridStep').onchange=e=>{state.gridStep=Number(e.target.value);schedule()};$('viz_frequency').oninput=updateGeometryOnly;$('runSweep').onclick=runSweep;
     window.addEventListener('resize',debounce(()=>{updateGeometryOnly();plotAll();if(sweepResult)Plots.heatmap($('heatmap'),sweepResult,loadCell)},100));matchMedia('(prefers-color-scheme: light)').addEventListener?.('change',()=>{updateGeometryOnly();plotAll()});
   }
-  mountControls();bind();syncControls();updateGeometryOnly();compute();
+  mountControls();bind();syncControls();updateGeometryOnly();computeNow();
 })();
