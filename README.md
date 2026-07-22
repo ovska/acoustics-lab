@@ -5,7 +5,7 @@ in a browser; no build step or package installation is required.
 
 ## Tools
 
-### [Porous Absorber Efficiency Lab](./index.html)
+### [Porous Absorber Efficiency Lab](./absorbers.html)
 
 Compare porous-absorber efficiency from 20 Hz to 20 kHz, including layer
 thickness, flow resistivity, air gaps, incidence assumptions, optimization and
